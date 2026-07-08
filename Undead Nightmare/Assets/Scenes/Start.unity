@@ -817,7 +817,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   velocidadPatrulla: 1
-  velocidadPersecucion: 2.5
+  velocidadPersecucion: 1.8
   distanciaPatrulla: 2
   distanciaDeteccion: 5
   distanciaAtaque: 1
