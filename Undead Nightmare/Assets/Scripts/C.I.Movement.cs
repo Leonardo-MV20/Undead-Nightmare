@@ -2,11 +2,17 @@ using UnityEngine;
 
 public class C_I_Movement : MonoBehaviour
 {
+    [Header("Movimiento")]
     public float velocidadPatrulla = 1f;
     public float velocidadPersecucion = 2.5f;
     public float distanciaPatrulla = 2f;
+
+    [Header("Detección")]
     public float distanciaDeteccion = 5f;
     public float distanciaAtaque = 1f;
+
+    [Header("Jugador")]
+    public string tagJugador = "Player";
 
     private Rigidbody2D rb;
     private Transform jugador;
@@ -19,15 +25,36 @@ public class C_I_Movement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
-        jugador = GameObject.FindGameObjectWithTag("Player").transform;
+
+        if (rb == null)
+        {
+            Debug.LogError("Common Infected no tiene Rigidbody2D.");
+            enabled = false;
+            return;
+        }
+
         puntoInicial = rb.position;
 
+        BuscarJugador();
         MirarHaciaDondeCamina();
     }
 
     void FixedUpdate()
     {
         if (atacando) return;
+
+        // Si el jugador no existe o fue destruido, intenta buscarlo de nuevo.
+        if (jugador == null)
+        {
+            BuscarJugador();
+
+            // Si todavía no encuentra jugador, solo patrulla.
+            if (jugador == null)
+            {
+                Patrullar();
+                return;
+            }
+        }
 
         float distanciaJugador = Mathf.Abs(jugador.position.x - transform.position.x);
 
@@ -42,6 +69,20 @@ public class C_I_Movement : MonoBehaviour
         else
         {
             Patrullar();
+        }
+    }
+
+    void BuscarJugador()
+    {
+        GameObject objetoJugador = GameObject.FindGameObjectWithTag(tagJugador);
+
+        if (objetoJugador != null)
+        {
+            jugador = objetoJugador.transform;
+        }
+        else
+        {
+            jugador = null;
         }
     }
 
@@ -64,6 +105,8 @@ public class C_I_Movement : MonoBehaviour
 
     void PerseguirJugador()
     {
+        if (jugador == null) return;
+
         float direccionJugador = jugador.position.x - transform.position.x;
         direccion = direccionJugador > 0 ? 1 : -1;
 
@@ -80,14 +123,17 @@ public class C_I_Movement : MonoBehaviour
         rb.MovePosition(nuevaPosicion);
     }
 
-   void Atacar()
+    void Atacar()
     {
         atacando = true;
-        
-        animator.ResetTrigger("Attack");
-        animator.SetTrigger("Attack");
 
-        Invoke("TerminarAtaque", 1f);
+        if (animator != null)
+        {
+            animator.ResetTrigger("Attack");
+            animator.SetTrigger("Attack");
+        }
+
+        Invoke(nameof(TerminarAtaque), 1f);
     }
 
     void TerminarAtaque()
@@ -100,9 +146,13 @@ public class C_I_Movement : MonoBehaviour
         Vector3 escala = transform.localScale;
 
         if (direccion == 1)
-        escala.x = -Mathf.Abs(escala.x);
+        {
+            escala.x = -Mathf.Abs(escala.x);
+        }
         else
-        escala.x = Mathf.Abs(escala.x);
+        {
+            escala.x = Mathf.Abs(escala.x);
+        }
 
         transform.localScale = escala;
     }
