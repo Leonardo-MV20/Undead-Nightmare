@@ -7,8 +7,8 @@ public class PlayerMoveset : MonoBehaviour
     public float velocidad = 5f;
 
     [Header("Combate")]
-    public int dañoGolpe = 20;
-    public int dañoDisparo = 30;
+    public int dannoGolpe = 20;
+    public int dannoDisparo = 30;
     public float rangoAtaque = 1f;
     public float rangoDisparo = 6f;
     public Transform puntoAtaque;
@@ -48,18 +48,18 @@ public class PlayerMoveset : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.K) && !accionBloqueada)
         {
-            Debug.Log("Presioné K para disparar");
+            Debug.Log("Presiono K para disparar");
 
             PlayerStats stats = GetComponent<PlayerStats>();
 
             if (stats != null && stats.UsarMunicion(1))
             {
-                Debug.Log("Tengo munición, voy a disparar");
+                Debug.Log("Tengo municion, voy a disparar");
                 StartCoroutine(EjecutarDisparo());
             }
             else
             {
-                Debug.Log("No tengo munición");
+                Debug.Log("No tengo municion");
             }
         }
 
@@ -106,11 +106,11 @@ public class PlayerMoveset : MonoBehaviour
 
         foreach (Collider2D enemigo in enemigos)
         {
-            EnemyHealth vidaEnemigo = enemigo.GetComponent<EnemyHealth>();
+            EnemyHealth vidaEnemigo = enemigo.GetComponentInParent<EnemyHealth>();
 
             if (vidaEnemigo != null)
             {
-                vidaEnemigo.RecibirDaño(dañoGolpe);
+                vidaEnemigo.RecibirDanno(dannoGolpe);
             }
         }
 
@@ -121,7 +121,7 @@ public class PlayerMoveset : MonoBehaviour
 
     IEnumerator EjecutarDisparo()
     {
-        Debug.Log("Entré a EjecutarDisparo");
+        Debug.Log("Entro a EjecutarDisparo");
 
         accionBloqueada = true;
         movimientoHorizontal = 0;
@@ -142,19 +142,19 @@ public class PlayerMoveset : MonoBehaviour
 
         if (hit.collider != null)
         {
-            Debug.Log("El disparo golpeó a: " + hit.collider.name);
+            Debug.Log("El disparo golpeo a: " + hit.collider.name);
 
             EnemyHealth enemigo = hit.collider.GetComponentInParent<EnemyHealth>();
 
             if (enemigo != null)
             {
-                enemigo.RecibirDaño(20);
+                enemigo.RecibirDanno(20);
                 Debug.Log("Vida enemigo: " + enemigo.vidaActual);
             }
         }
         else
         {
-            Debug.Log("El disparo no golpeó nada");
+            Debug.Log("El disparo no golpeo nada");
         }
 
         yield return new WaitForSeconds(0.4f);

@@ -12,10 +12,10 @@ public class EnemyHealth : MonoBehaviour
         vidaActual = vidaMaxima;
     }
 
-    public void RecibirDaño(int cantidad)
+    public void RecibirDanno(int cantidad)
     {
         vidaActual -= cantidad;
-        Debug.Log("Infectado recibió daño. Vida actual: " + vidaActual);
+        Debug.Log("Infectado recibio danno. Vida actual: " + vidaActual);
 
         if (vidaActual <= 0)
         {
