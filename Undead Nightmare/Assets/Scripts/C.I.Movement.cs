@@ -133,6 +133,17 @@ public class C_I_Movement : MonoBehaviour
             animator.SetTrigger("Attack");
         }
 
+        if (jugador != null)
+        {
+            PlayerStats statsJugador = jugador.GetComponent<PlayerStats>();
+
+            if (statsJugador != null)
+            {
+                statsJugador.RecibirDaño(10);
+                Debug.Log("El infectado dañó al jugador");
+            }
+        }
+
         Invoke(nameof(TerminarAtaque), 1f);
     }
 

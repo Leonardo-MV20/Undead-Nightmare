@@ -1176,6 +1176,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   velocidad: 5
+  "da\xF1oGolpe": 20
+  "da\xF1oDisparo": 30
+  rangoAtaque: 1
+  rangoDisparo: 6
+  puntoAtaque: {fileID: 0}
+  capaInfectado:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!114 &1134462236
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2899,6 +2907,7 @@ GameObject:
   - component: {fileID: 1694644090}
   - component: {fileID: 1694644091}
   - component: {fileID: 1694644092}
+  - component: {fileID: 1694644093}
   m_Layer: 0
   m_Name: Common Infected
   m_TagString: Untagged
@@ -3084,6 +3093,20 @@ MonoBehaviour:
   distanciaDeteccion: 5
   distanciaAtaque: 1
   tagJugador: Player
+--- !u!114 &1694644093
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1694644086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e99369a277b9a24d8654d1c947d57a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  vidaMaxima: 100
+  vidaActual: 100
 --- !u!1 &1783206728
 GameObject:
   m_ObjectHideFlags: 0
