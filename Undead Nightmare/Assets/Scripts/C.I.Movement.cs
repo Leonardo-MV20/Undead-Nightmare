@@ -18,7 +18,12 @@ public class C_I_Movement : MonoBehaviour
     private Transform jugador;
     private Vector2 puntoInicial;
     private int direccion = 1;
+
     private bool atacando = false;
+    private bool recibiendoDanno = false;
+    private bool muerto = false;
+    private bool alertado = false;
+
     private Animator animator;
 
     void Start()
@@ -41,14 +46,14 @@ public class C_I_Movement : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (muerto) return;
         if (atacando) return;
+        if (recibiendoDanno) return;
 
-        // Si el jugador no existe o fue destruido, intenta buscarlo de nuevo.
         if (jugador == null)
         {
             BuscarJugador();
 
-            // Si todavía no encuentra jugador, solo patrulla.
             if (jugador == null)
             {
                 Patrullar();
@@ -56,13 +61,15 @@ public class C_I_Movement : MonoBehaviour
             }
         }
 
-        float distanciaJugador = Mathf.Abs(jugador.position.x - transform.position.x);
+        float distanciaJugador = Mathf.Abs(
+            jugador.position.x - transform.position.x
+        );
 
         if (distanciaJugador <= distanciaAtaque)
         {
             Atacar();
         }
-        else if (distanciaJugador <= distanciaDeteccion)
+        else if (alertado || distanciaJugador <= distanciaDeteccion)
         {
             PerseguirJugador();
         }
@@ -74,7 +81,8 @@ public class C_I_Movement : MonoBehaviour
 
     void BuscarJugador()
     {
-        GameObject objetoJugador = GameObject.FindGameObjectWithTag(tagJugador);
+        GameObject objetoJugador =
+            GameObject.FindGameObjectWithTag(tagJugador);
 
         if (objetoJugador != null)
         {
@@ -88,7 +96,13 @@ public class C_I_Movement : MonoBehaviour
 
     void Patrullar()
     {
-        Vector2 nuevaPosicion = rb.position + Vector2.right * direccion * velocidadPatrulla * Time.fixedDeltaTime;
+        Vector2 nuevaPosicion =
+            rb.position +
+            Vector2.right *
+            direccion *
+            velocidadPatrulla *
+            Time.fixedDeltaTime;
+
         rb.MovePosition(nuevaPosicion);
 
         if (rb.position.x >= puntoInicial.x + distanciaPatrulla)
@@ -107,24 +121,45 @@ public class C_I_Movement : MonoBehaviour
     {
         if (jugador == null) return;
 
-        float direccionJugador = jugador.position.x - transform.position.x;
-        direccion = direccionJugador > 0 ? 1 : -1;
+        float direccionJugador =
+            jugador.position.x - transform.position.x;
+
+        if (direccionJugador > 0)
+        {
+            direccion = 1;
+        }
+        else
+        {
+            direccion = -1;
+        }
 
         MirarHaciaDondeCamina();
 
-        float distanciaX = Mathf.Abs(jugador.position.x - transform.position.x);
+        float distanciaX = Mathf.Abs(
+            jugador.position.x - transform.position.x
+        );
 
         if (distanciaX <= distanciaAtaque)
         {
             return;
         }
 
-        Vector2 nuevaPosicion = rb.position + Vector2.right * direccion * velocidadPersecucion * Time.fixedDeltaTime;
+        Vector2 nuevaPosicion =
+            rb.position +
+            Vector2.right *
+            direccion *
+            velocidadPersecucion *
+            Time.fixedDeltaTime;
+
         rb.MovePosition(nuevaPosicion);
     }
 
     void Atacar()
     {
+        if (muerto) return;
+        if (atacando) return;
+        if (recibiendoDanno) return;
+
         atacando = true;
 
         if (animator != null)
@@ -135,16 +170,97 @@ public class C_I_Movement : MonoBehaviour
 
         if (jugador != null)
         {
-            PlayerStats statsJugador = jugador.GetComponent<PlayerStats>();
+            PlayerStats statsJugador =
+                jugador.GetComponent<PlayerStats>();
 
             if (statsJugador != null)
             {
-                statsJugador.RecibirDaño(10);
+                statsJugador.RecibirDaño(10,transform.position);
                 Debug.Log("El infectado dañó al jugador");
             }
         }
 
         Invoke(nameof(TerminarAtaque), 1f);
+    }
+
+    public void ForzarAtaque()
+    {
+        if (muerto) return;
+
+        recibiendoDanno = false;
+        atacando = false;
+
+        BuscarJugador();
+
+        if (jugador != null)
+        {
+            float direccionJugador =
+                jugador.position.x - transform.position.x;
+
+            if (direccionJugador > 0)
+            {
+                direccion = 1;
+            }
+            else
+            {
+                direccion = -1;
+            }
+
+            MirarHaciaDondeCamina();
+        }
+
+        Atacar();
+    }
+
+    public void AlertarEnemigo()
+    {
+        alertado = true;
+
+        BuscarJugador();
+
+        if (jugador != null)
+        {
+            float direccionJugador =
+                jugador.position.x - transform.position.x;
+
+            if (direccionJugador > 0)
+            {
+                direccion = 1;
+            }
+            else
+            {
+                direccion = -1;
+            }
+
+            MirarHaciaDondeCamina();
+        }
+    }
+
+    public void ComenzarReaccionDanno()
+    {
+        recibiendoDanno = true;
+        atacando = false;
+
+        CancelInvoke(nameof(TerminarAtaque));
+    }
+
+    public void TerminarReaccionDanno()
+    {
+        recibiendoDanno = false;
+    }
+
+    public void MarcarComoMuerto()
+    {
+        muerto = true;
+        atacando = false;
+        recibiendoDanno = false;
+
+        CancelInvoke();
+
+        if (rb != null)
+        {
+            rb.velocity = Vector2.zero;
+        }
     }
 
     void TerminarAtaque()

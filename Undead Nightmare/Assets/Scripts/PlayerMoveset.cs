@@ -1,5 +1,4 @@
 using System.Collections;
-using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 
 public class PlayerMoveset : MonoBehaviour
@@ -14,11 +13,31 @@ public class PlayerMoveset : MonoBehaviour
     public Transform puntoAtaque;
     public LayerMask capaInfectado;
 
+    [Header("Recarga")]
+    public float duracionRecarga = 2f;
+
+    [Header("Esquive")]
+    public float velocidadEsquive = 10f;
+    public float duracionEsquive = 0.25f;
+    public float tiempoEsperaEsquive = 1f;
+
+    [Header("Sonidos")]
+    public AudioSource audioPasos;
+    public AudioSource audioEfectos;
+
+    public AudioClip sonidoAtaque;
+    public AudioClip sonidoDisparo;
+    public AudioClip sonidoRecarga;
+
     private Rigidbody2D rb;
     private Animator animator;
     private PlayerStats stats;
+
     private float movimientoHorizontal;
     private bool accionBloqueada = false;
+
+    private bool esquivando = false;
+    private bool puedeEsquivar = true;
 
     void Start()
     {
@@ -31,86 +50,220 @@ public class PlayerMoveset : MonoBehaviour
     {
         if (!accionBloqueada)
         {
-            movimientoHorizontal = Input.GetAxisRaw("Horizontal");
+            movimientoHorizontal =
+                Input.GetAxisRaw("Horizontal");
 
-            bool corriendo = Mathf.Abs(movimientoHorizontal) > 0.01f;
+            bool corriendo =
+                Mathf.Abs(movimientoHorizontal) > 0.01f;
+
             animator.SetBool("isRunning", corriendo);
 
             if (movimientoHorizontal > 0)
-                transform.localScale = new Vector3(1, 1, 1);
+            {
+                transform.localScale =
+                    new Vector3(1, 1, 1);
+            }
             else if (movimientoHorizontal < 0)
-                transform.localScale = new Vector3(-1, 1, 1);
+            {
+                transform.localScale =
+                    new Vector3(-1, 1, 1);
+            }
+
+            if (audioPasos != null)
+            {
+                if (corriendo && !audioPasos.isPlaying)
+                {
+                    audioPasos.Play();
+                }
+                else if (!corriendo && audioPasos.isPlaying)
+                {
+                    audioPasos.Stop();
+                }
+            }
         }
-        if (Input.GetKeyDown(KeyCode.J) && !accionBloqueada)
+        else
+        {
+            DetenerPasos();
+        }
+
+        if (
+            Input.GetKeyDown(KeyCode.L) &&
+            !accionBloqueada &&
+            puedeEsquivar
+        )
+        {
+            StartCoroutine(EjecutarEsquive());
+        }
+
+        if (
+            Input.GetKeyDown(KeyCode.J) &&
+            !accionBloqueada
+        )
         {
             StartCoroutine(EjecutarAtaque());
         }
 
-        if (Input.GetKeyDown(KeyCode.K) && !accionBloqueada)
+        if (
+            Input.GetKeyDown(KeyCode.K) &&
+            !accionBloqueada
+        )
         {
-            Debug.Log("Presiono K para disparar");
-
-            PlayerStats stats = GetComponent<PlayerStats>();
-
-            if (stats != null && stats.UsarMunicion(1))
+            if (
+                stats != null &&
+                stats.UsarBala()
+            )
             {
-                Debug.Log("Tengo municion, voy a disparar");
                 StartCoroutine(EjecutarDisparo());
+            }
+            else if (
+                stats != null &&
+                stats.PuedeRecargar()
+            )
+            {
+                StartCoroutine(EjecutarRecarga());
             }
             else
             {
-                Debug.Log("No tengo municion");
+                Debug.Log(
+                    "No hay balas ni munición de reserva"
+                );
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.R) && !accionBloqueada)
+        if (
+            Input.GetKeyDown(KeyCode.R) &&
+            !accionBloqueada
+        )
         {
-            StartCoroutine(EjecutarAccion("Recharge", 2.0f));
+            if (
+                stats != null &&
+                stats.PuedeRecargar()
+            )
+            {
+                StartCoroutine(EjecutarRecarga());
+            }
         }
     }
 
     void FixedUpdate()
     {
+        if (esquivando)
+        {
+            return;
+        }
+
         if (accionBloqueada)
         {
-            rb.velocity = new Vector2(0, rb.velocity.y);
+            rb.velocity = new Vector2(
+                0,
+                rb.velocity.y
+            );
         }
         else
         {
-            rb.velocity = new Vector2(movimientoHorizontal * velocidad, rb.velocity.y);
+            rb.velocity = new Vector2(
+                movimientoHorizontal * velocidad,
+                rb.velocity.y
+            );
         }
     }
 
-    IEnumerator EjecutarAccion(string nombreAnimacion, float duracion)
+    IEnumerator EjecutarEsquive()
     {
         accionBloqueada = true;
+        esquivando = true;
+        puedeEsquivar = false;
         movimientoHorizontal = 0;
+
+        DetenerPasos();
+
+        animator.SetBool("isRunning", true);
+
+        float direccionEsquive;
+
+        if (transform.localScale.x > 0)
+        {
+            direccionEsquive = 1;
+        }
+        else
+        {
+            direccionEsquive = -1;
+        }
+
+        if (stats != null)
+        {
+            stats.CambiarInvulnerabilidad(true);
+        }
+
+        rb.velocity = new Vector2(
+            direccionEsquive * velocidadEsquive,
+            rb.velocity.y
+        );
+
+        yield return new WaitForSeconds(
+            duracionEsquive
+        );
+
+        rb.velocity = new Vector2(
+            0,
+            rb.velocity.y
+        );
+
+        if (stats != null)
+        {
+            stats.CambiarInvulnerabilidad(false);
+        }
+
         animator.SetBool("isRunning", false);
-        animator.SetTrigger(nombreAnimacion);
 
-        yield return new WaitForSeconds(duracion);
-
+        esquivando = false;
         accionBloqueada = false;
+
+        yield return new WaitForSeconds(
+            tiempoEsperaEsquive
+        );
+
+        puedeEsquivar = true;
     }
 
     IEnumerator EjecutarAtaque()
     {
         accionBloqueada = true;
         movimientoHorizontal = 0;
+
+        DetenerPasos();
+
         animator.SetBool("isRunning", false);
         animator.SetTrigger("Attack");
 
+        if (
+            audioEfectos != null &&
+            sonidoAtaque != null
+        )
+        {
+            audioEfectos.PlayOneShot(sonidoAtaque);
+        }
+
         yield return new WaitForSeconds(0.25f);
 
-        Collider2D[] enemigos = Physics2D.OverlapCircleAll(puntoAtaque.position, rangoAtaque, capaInfectado);
+        Collider2D[] enemigos =
+            Physics2D.OverlapCircleAll(
+                puntoAtaque.position,
+                rangoAtaque,
+                capaInfectado
+            );
 
         foreach (Collider2D enemigo in enemigos)
         {
-            EnemyHealth vidaEnemigo = enemigo.GetComponentInParent<EnemyHealth>();
+            EnemyHealth vidaEnemigo =
+                enemigo.GetComponentInParent<EnemyHealth>();
 
             if (vidaEnemigo != null)
             {
-                vidaEnemigo.RecibirDanno(dannoGolpe);
+                vidaEnemigo.RecibirDannoCuerpoACuerpo(
+                    dannoGolpe,
+                    transform.position
+                );
             }
         }
 
@@ -121,52 +274,150 @@ public class PlayerMoveset : MonoBehaviour
 
     IEnumerator EjecutarDisparo()
     {
-        Debug.Log("Entro a EjecutarDisparo");
-
         accionBloqueada = true;
         movimientoHorizontal = 0;
+
+        DetenerPasos();
+
         animator.SetBool("isRunning", false);
         animator.SetTrigger("Shot");
 
         yield return new WaitForSeconds(0.2f);
 
-        Vector2 direccion = transform.localScale.x > 0 ? Vector2.right : Vector2.left;
+        if (
+            audioEfectos != null &&
+            sonidoDisparo != null
+        )
+        {
+            audioEfectos.PlayOneShot(sonidoDisparo);
+        }
 
-        Vector2 origen = (Vector2)transform.position + new Vector2(direccion.x * 1f, -0.5f);
+        Vector2 direccion;
 
-        RaycastHit2D hit = Physics2D.Raycast(origen, direccion, 20f);
+        if (transform.localScale.x > 0)
+        {
+            direccion = Vector2.right;
+        }
+        else
+        {
+            direccion = Vector2.left;
+        }
 
-        Debug.DrawRay(origen, direccion * 20f, Color.red, 1f);
+        Vector2 origen =
+            (Vector2)transform.position +
+            new Vector2(
+                direccion.x * 1f,
+                -0.5f
+            );
 
-        Debug.DrawRay(transform.position, direccion * 20f, Color.red, 1f);
+        RaycastHit2D hit =
+            Physics2D.Raycast(
+                origen,
+                direccion,
+                rangoDisparo
+            );
+
+        Debug.DrawRay(
+            origen,
+            direccion * rangoDisparo,
+            Color.red,
+            1f
+        );
 
         if (hit.collider != null)
         {
-            Debug.Log("El disparo golpeo a: " + hit.collider.name);
+            Debug.Log(
+                "El disparo golpeó a: " +
+                hit.collider.name
+            );
 
-            EnemyHealth enemigo = hit.collider.GetComponentInParent<EnemyHealth>();
+            EnemyHealth enemigo =
+                hit.collider
+                    .GetComponentInParent<EnemyHealth>();
 
             if (enemigo != null)
             {
-                enemigo.RecibirDanno(20);
-                Debug.Log("Vida enemigo: " + enemigo.vidaActual);
+                enemigo.RecibirDannoDisparo(
+                    dannoDisparo,
+                    transform.position
+                );
+
+                Debug.Log(
+                    "Vida enemigo: " +
+                    enemigo.vidaActual
+                );
             }
         }
         else
         {
-            Debug.Log("El disparo no golpeo nada");
+            Debug.Log(
+                "El disparo no golpeó nada"
+            );
         }
 
         yield return new WaitForSeconds(0.4f);
 
         accionBloqueada = false;
+
+        if (
+            stats != null &&
+            stats.balasActuales <= 0 &&
+            stats.PuedeRecargar()
+        )
+        {
+            StartCoroutine(EjecutarRecarga());
+        }
+    }
+
+    IEnumerator EjecutarRecarga()
+    {
+        accionBloqueada = true;
+        movimientoHorizontal = 0;
+
+        DetenerPasos();
+
+        animator.SetBool("isRunning", false);
+        animator.SetTrigger("Recharge");
+
+        if (
+            audioEfectos != null &&
+            sonidoRecarga != null
+        )
+        {
+            audioEfectos.PlayOneShot(sonidoRecarga);
+        }
+
+        yield return new WaitForSeconds(
+            duracionRecarga
+        );
+
+        if (stats != null)
+        {
+            stats.Recargar();
+        }
+
+        accionBloqueada = false;
+    }
+
+    public void DetenerPasos()
+    {
+        if (
+            audioPasos != null &&
+            audioPasos.isPlaying
+        )
+        {
+            audioPasos.Stop();
+        }
     }
 
     void OnDrawGizmosSelected()
     {
         if (puntoAtaque != null)
         {
-            Gizmos.DrawWireSphere(puntoAtaque.position, rangoAtaque);
+            Gizmos.DrawWireSphere(
+                puntoAtaque.position,
+                rangoAtaque
+            );
         }
     }
 }

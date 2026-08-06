@@ -12,12 +12,16 @@ public class UI_PlayerHUD : MonoBehaviour
     {
         if (playerStats == null)
         {
-            playerStats = FindObjectOfType<PlayerStats>();
+            playerStats =
+                FindObjectOfType<PlayerStats>();
         }
 
         if (playerStats != null)
         {
-            playerStats.OnStatsChanged.AddListener(ActualizarHUD);
+            playerStats.OnStatsChanged.AddListener(
+                ActualizarHUD
+            );
+
             ActualizarHUD();
         }
     }
@@ -26,7 +30,9 @@ public class UI_PlayerHUD : MonoBehaviour
     {
         if (playerStats != null)
         {
-            playerStats.OnStatsChanged.RemoveListener(ActualizarHUD);
+            playerStats.OnStatsChanged.RemoveListener(
+                ActualizarHUD
+            );
         }
     }
 
@@ -36,13 +42,20 @@ public class UI_PlayerHUD : MonoBehaviour
 
         if (textoMunicion != null)
         {
-            textoMunicion.text = "Balas: " + playerStats.municionActual + "/" + playerStats.municionMaxima;
+            textoMunicion.text =
+                "Balas: " +
+                playerStats.balasActuales +
+                "/" +
+                playerStats.municionReservaActual;
         }
 
         if (barraVida != null)
         {
-            barraVida.maxValue = playerStats.vidaMaxima;
-            barraVida.value = playerStats.vidaActual;
+            barraVida.maxValue =
+                playerStats.vidaMaxima;
+
+            barraVida.value =
+                playerStats.vidaActual;
         }
     }
 }
