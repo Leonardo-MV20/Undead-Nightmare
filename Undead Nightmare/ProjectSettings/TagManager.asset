@@ -3,7 +3,8 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - SpecialInfected2
   layers:
   - Default
   - TransparentFX
@@ -11,9 +12,9 @@ TagManager:
   - Pickup
   - Water
   - UI
-  - Infectado
-  - 
-  - 
+  - Infected
+  - Player
+  - SpecialInfected2
   - 
   - 
   - 

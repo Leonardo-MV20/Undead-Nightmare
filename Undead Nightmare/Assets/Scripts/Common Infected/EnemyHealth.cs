@@ -7,9 +7,6 @@ public class EnemyHealth : MonoBehaviour
     public int vidaMaxima = 100;
     public int vidaActual;
 
-    [Header("Resistencia a disparos")]
-    public int divisorDannoDisparo = 5;
-
     [Header("Reacción al golpe")]
     public float fuerzaRetroceso = 3f;
     public float duracionRetroceso = 0.2f;
@@ -21,6 +18,9 @@ public class EnemyHealth : MonoBehaviour
     [Header("Muerte")]
     public float duracionAnimacionMuerte = 1f;
 
+    [Header("Puerta")]
+    public DoorController puerta;
+
     private Animator animator;
     private Rigidbody2D rb;
     private C_I_Movement movimiento;
@@ -28,6 +28,10 @@ public class EnemyHealth : MonoBehaviour
     private int golpesConsecutivos = 0;
     private bool recibiendoDanno = false;
     private bool muerto = false;
+
+    [Header("Combate")]
+    public int dannoGolpe = 20;
+    public int dannoDisparo = 30;
 
     void Start()
     {
@@ -64,14 +68,18 @@ public class EnemyHealth : MonoBehaviour
 
         golpesConsecutivos++;
 
-        CancelInvoke(nameof(ReiniciarGolpesConsecutivos));
+        CancelInvoke(
+            nameof(ReiniciarGolpesConsecutivos)
+        );
 
         if (golpesConsecutivos <= 2)
         {
             if (!recibiendoDanno)
             {
                 StartCoroutine(
-                    ReaccionarAlGolpe(posicionJugador)
+                    ReaccionarAlGolpe(
+                        posicionJugador
+                    )
                 );
             }
 
@@ -96,27 +104,17 @@ public class EnemyHealth : MonoBehaviour
     }
 
     public void RecibirDannoDisparo(
-        int cantidad,
-        Vector3 posicionJugador
-    )
+    int cantidad,
+    Vector3 posicionJugador
+)
     {
         if (muerto) return;
 
-        int dannoReducido = cantidad / divisorDannoDisparo;
-
-        if (dannoReducido < 1)
-        {
-            dannoReducido = 1;
-        }
-
-        vidaActual -= dannoReducido;
+        vidaActual -= cantidad;
 
         Debug.Log(
-            "Infectado recibió disparo reducido: " + dannoReducido
-        );
-
-        Debug.Log(
-            "Vida actual del infectado: " + vidaActual
+            "Infectado recibió disparo. Vida actual: "
+            + vidaActual
         );
 
         if (movimiento != null)
@@ -127,10 +125,22 @@ public class EnemyHealth : MonoBehaviour
         if (vidaActual <= 0)
         {
             Morir();
+            return;
+        }
+
+        if (!recibiendoDanno)
+        {
+            StartCoroutine(
+                ReaccionarAlGolpe(
+                    posicionJugador
+                )
+            );
         }
     }
 
-    IEnumerator ReaccionarAlGolpe(Vector3 posicionJugador)
+    IEnumerator ReaccionarAlGolpe(
+        Vector3 posicionJugador
+    )
     {
         recibiendoDanno = true;
 
@@ -147,7 +157,10 @@ public class EnemyHealth : MonoBehaviour
 
         float direccionRetroceso;
 
-        if (transform.position.x < posicionJugador.x)
+        if (
+            transform.position.x <
+            posicionJugador.x
+        )
         {
             direccionRetroceso = -1;
         }
@@ -159,12 +172,15 @@ public class EnemyHealth : MonoBehaviour
         if (rb != null)
         {
             rb.velocity = new Vector2(
-                direccionRetroceso * fuerzaRetroceso,
+                direccionRetroceso *
+                fuerzaRetroceso,
                 rb.velocity.y
             );
         }
 
-        yield return new WaitForSeconds(duracionRetroceso);
+        yield return new WaitForSeconds(
+            duracionRetroceso
+        );
 
         if (rb != null)
         {
@@ -175,11 +191,14 @@ public class EnemyHealth : MonoBehaviour
         }
 
         float tiempoRestante =
-            duracionAnimacionDanno - duracionRetroceso;
+            duracionAnimacionDanno -
+            duracionRetroceso;
 
         if (tiempoRestante > 0)
         {
-            yield return new WaitForSeconds(tiempoRestante);
+            yield return new WaitForSeconds(
+                tiempoRestante
+            );
         }
 
         recibiendoDanno = false;
@@ -207,7 +226,9 @@ public class EnemyHealth : MonoBehaviour
 
         CancelInvoke();
 
-        Debug.Log("El infectado murió");
+        Debug.Log(
+            "El infectado murió"
+        );
 
         if (movimiento != null)
         {
@@ -219,19 +240,16 @@ public class EnemyHealth : MonoBehaviour
             rb.velocity = Vector2.zero;
         }
 
-        Collider2D colliderEnemigo =
-            GetComponent<Collider2D>();
-
-        if (colliderEnemigo != null)
-        {
-            colliderEnemigo.enabled = false;
-        }
-
         if (animator != null)
         {
             animator.ResetTrigger("Hurt");
             animator.ResetTrigger("Attack");
-            animator.SetTrigger("Death");
+            animator.SetTrigger("Dead");
+        }
+
+        if (puerta != null)
+        {
+            puerta.AbrirPuerta();
         }
 
         Destroy(

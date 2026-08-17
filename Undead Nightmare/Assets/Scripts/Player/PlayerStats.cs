@@ -27,6 +27,7 @@ public class PlayerStats : MonoBehaviour
     public AudioSource audioEfectos;
     public AudioSource audioPasos;
     public AudioClip sonidoDanno;
+    public AudioClip sonidoMuerte;
 
     public UnityEvent OnStatsChanged = new UnityEvent();
 
@@ -308,6 +309,16 @@ public class PlayerStats : MonoBehaviour
         )
         {
             audioPasos.Stop();
+        }
+
+        if (
+            audioEfectos != null &&
+            sonidoMuerte != null
+        )
+        {
+            audioEfectos.PlayOneShot(
+                sonidoMuerte
+            );
         }
 
         if (rb != null)

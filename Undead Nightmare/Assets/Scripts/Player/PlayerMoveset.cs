@@ -25,6 +25,10 @@ public class PlayerMoveset : MonoBehaviour
     public AudioSource audioPasos;
     public AudioSource audioEfectos;
 
+    [Header("Cooldowns")]
+    public float cooldownAtaque = 0.8f;
+    public float cooldownDisparo = 0.6f;
+
     public AudioClip sonidoAtaque;
     public AudioClip sonidoDisparo;
     public AudioClip sonidoRecarga;
@@ -38,6 +42,9 @@ public class PlayerMoveset : MonoBehaviour
 
     private bool esquivando = false;
     private bool puedeEsquivar = true;
+
+    private bool puedeAtacar = true;
+    private bool puedeDisparar = true;
 
     void Start()
     {
@@ -97,7 +104,8 @@ public class PlayerMoveset : MonoBehaviour
 
         if (
             Input.GetKeyDown(KeyCode.J) &&
-            !accionBloqueada
+            !accionBloqueada &&
+            puedeAtacar
         )
         {
             StartCoroutine(EjecutarAtaque());
@@ -105,8 +113,10 @@ public class PlayerMoveset : MonoBehaviour
 
         if (
             Input.GetKeyDown(KeyCode.K) &&
-            !accionBloqueada
+            !accionBloqueada &&
+            puedeDisparar
         )
+
         {
             if (
                 stats != null &&
@@ -230,6 +240,7 @@ public class PlayerMoveset : MonoBehaviour
     {
         accionBloqueada = true;
         movimientoHorizontal = 0;
+        puedeAtacar = false;
 
         DetenerPasos();
 
@@ -265,17 +276,57 @@ public class PlayerMoveset : MonoBehaviour
                     transform.position
                 );
             }
+
+            SpecialInfectedHealth vidaEspecial =
+                enemigo.GetComponentInParent<SpecialInfectedHealth>();
+
+            if (vidaEspecial != null)
+            {
+                vidaEspecial.RecibirDannoCuerpoACuerpo(
+                    dannoGolpe,
+                    transform.position
+                );
+            }
+
+            SpecialInfected2Health vidaEspecial2 =
+                enemigo.GetComponentInParent<SpecialInfected2Health>();
+
+            if (vidaEspecial2 != null)
+            {
+                vidaEspecial2.RecibirDannoCuerpoACuerpo(
+                    dannoGolpe,
+                    transform.position
+                );
+            }
         }
 
         yield return new WaitForSeconds(0.25f);
 
+        movimientoHorizontal =
+            Input.GetAxisRaw("Horizontal");
+
+        bool corriendo =
+            Mathf.Abs(movimientoHorizontal) > 0.01f;
+
+        animator.SetBool(
+            "isRunning",
+            corriendo
+        );
+
         accionBloqueada = false;
+
+        yield return new WaitForSeconds(
+            cooldownAtaque
+        );
+
+        puedeAtacar = true;
     }
 
     IEnumerator EjecutarDisparo()
     {
         accionBloqueada = true;
         movimientoHorizontal = 0;
+        puedeDisparar = false;
 
         DetenerPasos();
 
@@ -347,6 +398,30 @@ public class PlayerMoveset : MonoBehaviour
                     enemigo.vidaActual
                 );
             }
+
+            SpecialInfectedHealth enemigoEspecial =
+                hit.collider
+                    .GetComponentInParent<SpecialInfectedHealth>();
+
+            if (enemigoEspecial != null)
+            {
+                enemigoEspecial.RecibirDannoDisparo(
+                    dannoDisparo,
+                    transform.position
+                );
+            }
+
+            SpecialInfected2Health enemigoEspecial2 =
+                hit.collider
+                    .GetComponentInParent<SpecialInfected2Health>();
+
+            if (enemigoEspecial2 != null)
+            {
+                enemigoEspecial2.RecibirDannoDisparo(
+                    dannoDisparo,
+                    transform.position
+                );
+            }
         }
         else
         {
@@ -356,6 +431,17 @@ public class PlayerMoveset : MonoBehaviour
         }
 
         yield return new WaitForSeconds(0.4f);
+
+        movimientoHorizontal =
+            Input.GetAxisRaw("Horizontal");
+
+        bool corriendo =
+            Mathf.Abs(movimientoHorizontal) > 0.01f;
+
+        animator.SetBool(
+            "isRunning",
+            corriendo
+        );
 
         accionBloqueada = false;
 
@@ -367,6 +453,10 @@ public class PlayerMoveset : MonoBehaviour
         {
             StartCoroutine(EjecutarRecarga());
         }
+
+        yield return new WaitForSeconds(cooldownDisparo);
+
+        puedeDisparar = true;
     }
 
     IEnumerator EjecutarRecarga()
