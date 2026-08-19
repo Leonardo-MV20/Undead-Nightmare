@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameCompleteUI : MonoBehaviour
 {
@@ -37,8 +38,15 @@ public class GameCompleteUI : MonoBehaviour
             jugador.enabled = false;
         }
 
-        Debug.Log(
-            "Juego completado"
+        Debug.Log("Juego completado");
+    }
+
+    public void ReiniciarJuego()
+    {
+        Time.timeScale = 1f;
+
+        SceneManager.LoadScene(
+            SceneManager.GetActiveScene().buildIndex
         );
     }
 }
