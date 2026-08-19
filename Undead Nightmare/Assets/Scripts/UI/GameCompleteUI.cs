@@ -7,7 +7,7 @@ public class GameCompleteUI : MonoBehaviour
     public GameObject textoMunicion;
     public GameObject barraVida;
     public PlayerMoveset jugador;
-
+    public GameObject controles;
     void Start()
     {
         if (panelJuegoCompletado != null)
@@ -36,6 +36,11 @@ public class GameCompleteUI : MonoBehaviour
         if (jugador != null)
         {
             jugador.enabled = false;
+        }
+
+        if (controles != null)
+        {
+            controles.SetActive(false);
         }
 
         Debug.Log("Juego completado");

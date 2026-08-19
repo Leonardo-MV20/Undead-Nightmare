@@ -4064,6 +4064,7 @@ MonoBehaviour:
   textoMunicion: {fileID: 1647033514}
   barraVida: {fileID: 370452844}
   jugador: {fileID: 1134462235}
+  controles: {fileID: 825923860}
 --- !u!114 &539049202
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15843,7 +15844,7 @@ GameObject:
   - component: {fileID: 825923863}
   - component: {fileID: 825923862}
   m_Layer: 0
-  m_Name: Text (TMP)
+  m_Name: Controles
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
